@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Створити сім'ю — School Kingdoms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sk-styles.css">
+<style>
+  body{display:flex;flex-direction:column}
+
+  /* ── Індикатор кроків ── */
+  .steps{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px}
+  .steps .dot{display:flex;align-items:center;gap:8px}
+  .steps .num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.9rem;
+    background:rgba(8,20,42,.55);border:1.5px solid rgba(242,199,92,.45);color:#cdd9ef;transition:.2s}
+  .steps .num.active{background:linear-gradient(180deg,#FFE7A0,#E0A93A);color:#5a3d08;border-color:var(--gold-d)}
+  .steps .num.done{background:var(--green);color:#fff;border-color:#3fae6a}
+  .steps .lbl{font-size:.8rem;font-weight:700;color:#cdd9ef}
+  .steps .lbl.active{color:#FBEFD0}
+  .steps .bar{flex:0 0 26px;height:2px;background:rgba(242,199,92,.3);border-radius:2px}
+
+  /* ── Роль користувача ── */
+  .role-chips{display:flex;gap:8px;margin-bottom:14px}
+  .role-chips button{flex:1;border:1.5px solid rgba(242,199,92,.4);border-radius:13px;padding:11px 6px;
+    font-family:'Nunito',sans-serif;font-weight:800;font-size:.92rem;color:#cdd9ef;background:rgba(8,20,42,.4);
+    cursor:pointer;transition:.15s}
+  .role-chips button:hover{border-color:var(--gold)}
+  .role-chips button.active{border-color:#FFE7A0;background:rgba(242,199,92,.18);color:#fff;
+    box-shadow:0 0 0 2px rgba(242,199,92,.4)}
+
+  /* ── Вибір аватара дитини ── */
+  .avatar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px;margin-bottom:14px}
+  .avatar-option{border:2px solid rgba(242,199,92,.4);border-radius:14px;padding:10px 4px;text-align:center;
+    cursor:pointer;background:rgba(8,20,42,.4);transition:.15s;font-size:1.6rem}
+  .avatar-option:hover{border-color:var(--gold);transform:translateY(-2px)}
+  .avatar-option.selected{border-color:#FFE7A0;background:rgba(242,199,92,.18);box-shadow:0 0 0 2px rgba(242,199,92,.5)}
+</style>
+</head>
+<body>
+  <div class="bg-fallback"></div>
+  <div class="stars"></div>
+  <div class="moon"></div>
+
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="School Kingdoms — на головну">
+      <span class="crest" aria-hidden="true">🛡️</span>
+      <span><span class="brand-name">School <b>Kingdoms</b></span><span class="brand-sub">Моє королівство знань</span></span>
+    </a>
+  </header>
+
+  <main class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-title">Реєстрація</div>
+      <div class="auth-sub" id="authSub">Створіть акаунт — Героїв додасте у своєму кабінеті.</div>
+
+      <!-- ── РЕЄСТРАЦІЯ USER ── -->
+      <section id="stepParent">
+        <div class="field-row">
+          <div class="field">
+            <label for="pName">Ім'я</label>
+            <input id="pName" type="text" autocomplete="given-name" placeholder="Наталія">
+          </div>
+          <div class="field">
+            <label for="pSurname">Прізвище</label>
+            <input id="pSurname" type="text" autocomplete="family-name" placeholder="Коваленко">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="pEmail">Email</label>
+          <input id="pEmail" type="email" autocomplete="email" placeholder="name@example.com">
+        </div>
+
+        <div class="field">
+          <label for="pPhone">Телефон <span style="text-transform:none;color:#9fb2d2;font-weight:600">(необов'язково)</span></label>
+          <input id="pPhone" type="tel" autocomplete="tel" placeholder="+380 __ ___ __ __">
+        </div>
+        <div class="field">
+          <label for="pPass">Пароль</label>
+          <div class="pass-wrap">
+            <input id="pPass" type="password" autocomplete="new-password" placeholder="мінімум 6 символів">
+            <button type="button" class="pass-toggle" aria-label="Показати пароль" aria-pressed="false" onclick="togglePass(this,'pPass')">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="pPass2">Повторіть пароль</label>
+          <div class="pass-wrap">
+            <input id="pPass2" type="password" autocomplete="new-password" placeholder="••••••••">
+            <button type="button" class="pass-toggle" aria-label="Показати пароль" aria-pressed="false" onclick="togglePass(this,'pPass2')">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn btn-gold" id="btnRegister" onclick="doRegister()">Створити акаунт →</button>
+
+        <div class="divider">або</div>
+        <button class="btn btn-blue" id="btnGoogle" onclick="googleSoon()">Продовжити з Google</button>
+        <div class="hint" style="text-align:center;margin-top:6px">Вхід через Google — скоро.</div>
+
+        <div class="row-link">
+          <button class="link" onclick="location.href='login.html'">Вже маєте акаунт? Увійти</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="firebase-config.js"></script>
+  <script>
+    function $(id){ return document.getElementById(id); }
+    let toastT;
+    function toast(msg){
+      const t = $('toast'); t.textContent = msg; t.classList.add('show');
+      clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2800);
+    }
+
+    const selectedRole = 'user';
+
+    function friendlyAuthError(e){
+      const c = (e && e.code) || '';
+      if (c.includes('email-already-in-use')) return 'цей email уже зареєстровано — спробуйте увійти';
+      if (c.includes('invalid-email'))        return 'некоректний email';
+      if (c.includes('weak-password'))        return 'пароль закороткий (мінімум 6 символів)';
+      if (c.includes('too-many-requests'))    return 'забагато спроб, спробуйте пізніше';
+      if (c.includes('network'))              return 'немає зв\'язку з мережею';
+      return 'спробуйте ще раз';
+    }
+
+    // дочекатися firebase-config (SK)
+    function whenSK(cb){
+      let n = 0;
+      (function wait(){
+        if (window.SK && SK.ready){ SK.ready.then(cb); return; }
+        if (n++ < 100) setTimeout(wait, 50);
+      })();
+    }
+
+    // вже залогінених не тримаємо на реєстрації
+    whenSK(function(u){
+      if (u) location.replace(SK.isHeroSession() ? 'hero.html' : 'parent.html');
+    });
+
+    // показати / приховати пароль
+    const EYE_OPEN  = '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
+    const EYE_CLOSED= '<path d="M3 3l18 18"/><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/><path d="M9.4 5.2A9.6 9.6 0 0 1 12 5c6.5 0 10 7 10 7a16 16 0 0 1-3.1 3.9"/><path d="M6.1 6.1A16 16 0 0 0 2 12s3.5 7 10 7a9.5 9.5 0 0 0 3.9-.8"/>';
+    function togglePass(btn, inputId){
+      const inp = $(inputId);
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.querySelector('svg').innerHTML = show ? EYE_CLOSED : EYE_OPEN;
+      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+      btn.setAttribute('aria-label', show ? 'Приховати пароль' : 'Показати пароль');
+    }
+
+    // Google-вхід — на майбутнє
+    function googleSoon(){ toast('Вхід через Google зʼявиться згодом 🙂'); }
+
+    // ── Реєстрація user ──
+    async function doRegister(){
+      const name    = $('pName').value.trim();
+      const surname = $('pSurname').value.trim();
+      const email   = $('pEmail').value.trim();
+      const phone   = $('pPhone').value.trim();
+      const pass    = $('pPass').value;
+      const pass2   = $('pPass2').value;
+
+      if (!name)               { toast('⚠️ Введіть ім\'я'); return; }
+      if (!email)              { toast('⚠️ Введіть email'); return; }
+      if (pass.length < 6)     { toast('⚠️ Пароль — мінімум 6 символів'); return; }
+      if (pass !== pass2)      { toast('⚠️ Паролі не збігаються'); return; }
+      if (!window.SK)          { toast('⚠️ Зачекайте, ще завантажується…'); return; }
+
+      const btn = $('btnRegister');
+      btn.disabled = true; btn.textContent = 'Створюємо…';
+      try{
+        await SK.ready;
+        await SK.registerFamily({
+          parentName: name, parentSurname: surname, parentRole: selectedRole,
+          email, password: pass, phone
+        });
+        toast('✅ Акаунт створено!');
+        setTimeout(()=>location.href = 'parent.html', 600);
+      }catch(e){
+        console.warn('[auth] registerFamily:', e);
+        toast('❌ Не вдалося: ' + friendlyAuthError(e));
+        btn.disabled = false; btn.textContent = 'Створити акаунт →';
+      }
+    }
+  </script>
+</body>
+</html>

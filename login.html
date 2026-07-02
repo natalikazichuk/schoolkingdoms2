@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вхід — School Kingdoms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sk-styles.css">
+<style>
+  body{display:flex;flex-direction:column}
+  .auth-card{max-width:440px}   /* вужча за стандартну картку */
+
+  /* ── Перемикач Батьки / Дитина ── */
+  .tabs{display:flex;gap:8px;background:rgba(0,0,0,.25);border-radius:14px;padding:5px;margin-bottom:20px}
+  .tabs button{flex:1;border:none;border-radius:10px;padding:11px 6px;font-family:'Nunito',sans-serif;
+    font-weight:800;font-size:.92rem;color:#cdd9ef;background:transparent;cursor:pointer;transition:.15s}
+  .tabs button.active{background:linear-gradient(180deg,#27518c,#16356a);color:#fff;
+    box-shadow:0 3px 10px rgba(0,0,0,.3),inset 0 0 0 1.5px var(--gold)}
+
+  /* ── Профілі дітей ── */
+  .child-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-bottom:16px}
+  .avatar-option{border:2px solid rgba(242,199,92,.4);border-radius:16px;padding:12px 6px;text-align:center;
+    cursor:pointer;background:rgba(8,20,42,.4);transition:.15s}
+  .avatar-option:hover{border-color:var(--gold);transform:translateY(-2px)}
+  .avatar-option.selected{border-color:#FFE7A0;background:rgba(242,199,92,.18);box-shadow:0 0 0 2px rgba(242,199,92,.5)}
+  .avatar-option .emoji{font-size:2rem;display:block}
+  .avatar-option .name{font-weight:800;font-size:.88rem;margin-top:4px;display:block;color:#fff}
+  .info-msg{grid-column:1/-1;text-align:center;color:#cdd9ef;font-weight:600;font-size:.9rem;padding:8px 0;line-height:1.4}
+</style>
+</head>
+<body>
+  <div class="bg-fallback"></div>
+  <div class="stars"></div>
+  <div class="moon"></div>
+
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="School Kingdoms — на головну">
+      <span class="crest" aria-hidden="true">🛡️</span>
+      <span><span class="brand-name">School <b>Kingdoms</b></span><span class="brand-sub">Моє королівство знань</span></span>
+    </a>
+  </header>
+
+  <main class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-title">Вхід до королівства</div>
+      <div class="auth-sub">Оберіть, хто заходить у систему.</div>
+
+      <div class="tabs">
+        <button id="tabParent" class="active" onclick="showTab('parent')">Я — user</button>
+        <button id="tabChild" onclick="showTab('hero')">Я — Герой</button>
+      </div>
+
+      <!-- ── ФОРМА БАТЬКІВ ── -->
+      <section id="parentForm">
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" type="email" autocomplete="email" placeholder="name@example.com">
+        </div>
+        <div class="field">
+          <label for="loginPass">Пароль</label>
+          <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <button class="btn btn-blue" onclick="doParentLogin()">Увійти</button>
+        <div class="row-link"><button class="link" onclick="forgotPass()">Забули пароль?</button></div>
+      </section>
+
+      <!-- ── ФОРМА ГЕРОЯ ── -->
+      <section id="childForm" class="hidden">
+        <div class="auth-sub" style="margin-top:-4px">Введи свій логін і пароль Героя.</div>
+        <div class="field">
+          <label for="heroLogin">Логін Героя</label>
+          <input id="heroLogin" type="text" autocomplete="username" autocapitalize="none"
+                 spellcheck="false" placeholder="напр. lev2024">
+        </div>
+        <div class="field">
+          <label for="heroPass">Пароль</label>
+          <input id="heroPass" type="password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <button class="btn btn-gold" onclick="doHeroLogin()">Почати пригоду ⚡</button>
+        <div class="divider">потрібен дорослий?</div>
+        <button class="btn btn-blue" onclick="showTab('parent')">Вхід для user</button>
+      </section>
+    </div>
+
+    <!-- ── Посилання на реєстрацію (стиль як на auth.html) ── -->
+    <div class="row-link">
+      <button class="link" onclick="location.href='auth.html'">Немає акаунту? Зареєструватися</button>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Реальний вхід через спільний firebase-config.js -->
+  <script type="module" src="firebase-config.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    // 'hero' (новий) або 'child' (старий) → одразу вкладка Героя
+    const authNext = params.get('next') || '';
+    const wantHeroFirst = (authNext === 'hero' || authNext === 'child');
+
+    function $(id){ return document.getElementById(id); }
+    let toastT;
+    function toast(msg){
+      const t = $('toast'); t.textContent = msg; t.classList.add('show');
+      clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2600);
+    }
+    function friendlyAuthError(e){
+      const c = (e && e.code) || '';
+      if (c.includes('sk/login-too-short')) return 'логін закороткий';
+      if (c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found')) return 'невірний логін/email або пароль';
+      if (c.includes('invalid-email')) return 'некоректний логін або email';
+      if (c.includes('too-many-requests')) return 'забагато спроб, спробуйте пізніше';
+      if (c.includes('network')) return 'немає зв\'язку з мережею';
+      return 'спробуйте ще раз';
+    }
+
+    function showTab(which){
+      const isHero = (which === 'hero' || which === 'child');
+      $('tabParent').classList.toggle('active', !isHero);
+      $('tabChild').classList.toggle('active', isHero);
+      $('parentForm').classList.toggle('hidden', isHero);
+      $('childForm').classList.toggle('hidden', !isHero);
+      if (isHero) { const h = $('heroLogin'); if (h) h.focus(); }
+    }
+
+    // дочекатися firebase-config (SK)
+    function whenSK(cb){
+      let n = 0;
+      (function wait(){
+        if (window.SK && SK.ready){ SK.ready.then(cb); return; }
+        if (n++ < 100) setTimeout(wait, 50);
+      })();
+    }
+
+    // на старті: залогінених ведемо в їхній кабінет
+    whenSK(function(u){
+      if (u){
+        location.replace(SK.isHeroSession() ? 'hero.html' : 'parent.html');
+      } else {
+        showTab(wantHeroFirst ? 'hero' : 'parent');
+      }
+    });
+
+    async function doParentLogin(){
+      const email = $('loginEmail').value.trim();
+      const pass  = $('loginPass').value;
+      if (!email || !pass){ toast('⚠️ Введіть email і пароль'); return; }
+      if (!window.SK){ toast('⚠️ Зачекайте, ще завантажується…'); return; }
+      try{
+        await SK.login(email, pass);
+        location.href = 'parent.html';
+      }catch(e){
+        toast('❌ Не вдалося увійти: ' + friendlyAuthError(e));
+      }
+    }
+
+    async function doHeroLogin(){
+      const login = $('heroLogin').value.trim();
+      const pass  = $('heroPass').value;
+      if (!login || !pass){ toast('⚠️ Введіть логін і пароль'); return; }
+      if (!window.SK){ toast('⚠️ Зачекайте, ще завантажується…'); return; }
+      try{
+        await SK.heroLogin(login, pass);
+        location.href = 'hero.html';
+      }catch(e){
+        console.warn('[login] heroLogin:', e);
+        toast('❌ Не вдалося увійти: ' + friendlyAuthError(e));
+      }
+    }
+
+    function forgotPass(){
+      toast('Відновлення пароля зʼявиться згодом. Поки що зверніться до підтримки.');
+    }
+  </script>
+</body>
+</html>
